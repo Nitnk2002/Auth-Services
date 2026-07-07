@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface RefreshTokenRepository extends CrudRepository<RefreshToken, Integer> {
 
     Optional<RefreshToken> findByToken(String token);
+    Optional<RefreshToken> findByUserInfo(org.nit.entities.UserInfo userInfo);
 
 }

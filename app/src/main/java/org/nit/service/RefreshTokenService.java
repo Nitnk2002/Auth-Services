@@ -21,16 +21,27 @@ public class RefreshTokenService {
 
     public RefreshToken createRefreshToken(String username){
          UserInfo userInfoExtracted  = userRepository.findByUsername (username);
-         RefreshToken refreshToken = RefreshToken.builder()
-                 .userInfo(userInfoExtracted)
-                 .token(UUID.randomUUID ().toString ())
-                 .expiryDate(Instant.now ().plusMillis (600000))
-                 .build();
+         
+         Optional<RefreshToken> existingTokenOpt = refreshTokenRepository.findByUserInfo(userInfoExtracted);
+         RefreshToken refreshToken;
+         
+         if (existingTokenOpt.isPresent()) {
+             refreshToken = existingTokenOpt.get();
+             refreshToken.setToken(UUID.randomUUID().toString());
+             refreshToken.setExpiryDate(Instant.now().plusMillis(600000));
+         } else {
+             refreshToken = RefreshToken.builder()
+                     .userInfo(userInfoExtracted)
+                     .token(UUID.randomUUID().toString())
+                     .expiryDate(Instant.now().plusMillis(600000))
+                     .build();
+         }
+         
          return refreshTokenRepository.save(refreshToken);
     }
 
     public RefreshToken verifyExpiration(RefreshToken token){
-        if(token.getExpiryDate().compareTo(Instant.now ())>0){
+        if(token.getExpiryDate().compareTo(Instant.now ()) < 0){
             refreshTokenRepository.delete (token);
             throw  new RuntimeException ((token.getToken()+"Refresh token is expired please make a new login"));
         }

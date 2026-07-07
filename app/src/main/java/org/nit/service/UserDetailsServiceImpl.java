@@ -46,6 +46,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         return userRepository.findByUsername (userInfoDto.getUsername());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public Boolean signupUser(UserInfoDto userInfoDto){
         //Define a function to check if userEmail, password is correct
         userInfoDto.setPassword(passwordEncoder.encode (userInfoDto.getPassword()));
@@ -53,8 +54,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             return false;
         }
         String userId = UUID.randomUUID ().toString ();
-        userRepository.save (new UserInfo (userId,userInfoDto.getUsername(),
-                userInfoDto.getPassword(),new HashSet<> ()));
+        UserInfo newUser = new UserInfo();
+        newUser.setUserId(userId);
+        newUser.setUsername(userInfoDto.getUsername());
+        newUser.setPassword(userInfoDto.getPassword());
+        newUser.setFirstName(userInfoDto.getFirstName());
+        newUser.setLastName(userInfoDto.getLastName());
+        newUser.setEmail(userInfoDto.getEmail());
+        newUser.setPhoneNumber(userInfoDto.getPhoneNumber());
+        newUser.setRoles(new HashSet<>());
+        userRepository.save(newUser);
         userInfoProducer.sendEventToKafka (userinfoEventPublish (userInfoDto,userId));
         return true;
     }
